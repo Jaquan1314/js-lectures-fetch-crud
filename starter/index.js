@@ -25,9 +25,16 @@ function handleAnimalFormSubmit(event) {
     description: event.target.description.value,
     donations: 0
   }
+  
+  const data = animalObj
+
+  createAnimal(animalObj)
+  .then(newAnimalObj => {
+    renderOneAnimal(newAnimalObj)
+    console.log('Success:', newAnimalObj);
+  })
 
   // Step 2: slap it on the DOM
-  renderOneAnimal(animalObj)
 
   // (optional) Step 3: clear the input fields
   event.target.reset()
@@ -40,7 +47,11 @@ function handleAnimalListClick(event) {
     
     // traverse the DOM to find elements we care about, relative to the button
     const card = button.closest(".card")
-
+    const id = card.dataset.id
+    deleteAnimal(id)
+    .then(data => {
+      console.log('Success:', data);
+    })
     // remove the animal card
     card.remove()
   } else if (event.target.dataset.action === "donate") {
@@ -49,13 +60,26 @@ function handleAnimalListClick(event) {
     
     // traverse the DOM to find elements we care about, relative to the button
     const card = button.closest(".card")
+    const id = card.dataset.id
+    
     const donationCountSpan = card.querySelector(".donation-count")
     
     // get the donation amount from the DOM
-    const donationCount = parseInt(donationCountSpan.textContent)
+    const donationCount = parseInt(donationCountSpan.textContent) + 10
 
     // update the DOM
-    donationCountSpan.textContent = donationCount + 10
+    // optimistic rendering
+    // donationCountSpan.textContent = donationCount + 10
+
+    updateDonations(id, donationCount)
+    .then(updatedAnimal => {
+      console.log('Success:', updatedAnimal);
+      // pessimistic rendering
+      donationCountSpan.textContent = updatedAnimal.donations
+    })
+    .catch(error => {
+      alert(error)
+    })
   }
 }
 
@@ -65,6 +89,7 @@ function renderOneAnimal(animalObj) {
   // step 1. create the outer element using createElement (& assign necessary attributes)
   const card = document.createElement("li")
   card.className = "card"
+  card.dataset.id = animalObj.id
 
   // step 2. use innerHTML to create all of its children
   card.innerHTML = `
@@ -96,7 +121,11 @@ function renderAllAnimals(animalData) {
 /********** Initial Render **********/
 function initialize() {
   // animalData is an array of animal objects from data.js
-  renderAllAnimals(animalData)
+  getAllAnimals()
+  .then(animalArray => renderAllAnimals(animalArray))
+  .catch(errors => {
+    alert("Uh oh! Something went wrong!")
+  })
 }
 
 initialize()
